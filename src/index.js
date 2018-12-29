@@ -4,6 +4,15 @@ import faker from 'faker';
 let user1_id = faker.random.uuid();
 let user2_id = faker.random.uuid();
 
+let post1_id = faker.random.uuid();
+let post2_id = faker.random.uuid();
+let post3_id = faker.random.uuid();
+
+let comment1_id = faker.random.uuid();
+let comment2_id = faker.random.uuid();
+let comment3_id = faker.random.uuid();
+let comment4_id = faker.random.uuid();
+
 const users = [{
     id: user1_id,
     name: faker.name.firstName(),
@@ -16,32 +25,56 @@ const users = [{
     age: faker.random.number({min : 1, max: 100})
 }];
 
+
 const posts = [{
-    id: faker.random.uuid(),
-    title: faker.lorem.text(),
+    id: post1_id,
+    title: faker.lorem.word(),
     body: faker.lorem.paragraph(),
     published: faker.random.boolean(),
     author: user1_id
 }, {
-    id: faker.random.uuid(),
-    title: faker.lorem.text(),
+    id: post2_id,
+    title: faker.lorem.word(),
     body: faker.lorem.paragraph(),
     published: faker.random.boolean(),
     author: user2_id
 }, {
-    id: faker.random.uuid(),
-    title: faker.lorem.text(),
+    id: post3_id,
+    title: faker.lorem.word(),
     body: faker.lorem.paragraph(),
     published: faker.random.boolean(),
     author: user2_id
 }];
 
+const comments = [{
+    id: comment1_id,
+    text: faker.lorem.text(),
+    author: user1_id,
+    post: post1_id
+}, {
+    id: comment2_id,
+    text: faker.lorem.text(),
+    author: user1_id,
+    post: post2_id
+}, {
+    id: comment3_id,
+    text: faker.lorem.text(),
+    author: user2_id,
+    post: post2_id
+}, {
+    id: comment4_id,
+    text: faker.lorem.words(),
+    author: user2_id,
+    post: post3_id
+}];
+
 const typeDefs = `
     type Query {
-      users(query:String): [User!]!  
-      posts(query:String): [Post!]!
-      me: User!
-      post: Post!
+        users(query:String): [User!]!  
+        posts(query:String): [Post!]!
+        comments: [Comment!]!
+        me: User!
+        post: Post!
     }
     type User {
         id: ID!
@@ -49,6 +82,7 @@ const typeDefs = `
         email: String!
         age: Int
         posts: [Post!]!
+        comments: [Comment!]!
     }
     type Post {
         id: ID!
@@ -56,6 +90,13 @@ const typeDefs = `
         body: String
         published: Boolean!
         author: User!
+        comments:[Comment!]!
+    }
+    type Comment {
+        id: ID!
+        text: String!
+        author: User!
+        post: Post!
     }
 `;
 
@@ -81,6 +122,9 @@ const resolvers = {
                 return isTitleMatch || isBodyMatch
             })
         },
+        comments(parent, args, ctx, info) {
+            return comments
+        },
         me() {
             return {
                id: 123098,
@@ -102,6 +146,11 @@ const resolvers = {
             return users.find((user) => {
                 return user.id === parent.author
             })
+        },
+        comments(parent, args, ctx, info) {
+            return comments.filter((comment) => {
+                return comment.post === parent.id
+            })
         }
     },
     User: {
@@ -109,8 +158,25 @@ const resolvers = {
             return posts.filter((post) => {
                 return post.author === parent.id
             })
+        },
+        comments(parent, args, ctx, info) {
+            return comments.filter((comment) => {
+                return comment.author === parent.id
+            })
         }
-    }
+    },
+    Comment: {
+        author(parent, args, ctx, info) {
+            return users.find((user) => {
+                return user.id === parent.author
+            })
+        },
+        post(parent, args, ctx, info) {
+            return posts.find((post) => {
+                return post.id === parent.post
+            })
+        },
+    },
 };
 
 const server = new GraphQLServer({
