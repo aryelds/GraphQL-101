@@ -14,7 +14,7 @@ let comment2_id = faker.random.uuid();
 let comment3_id = faker.random.uuid();
 let comment4_id = faker.random.uuid();
 
-const users = [{
+let users = [{
     id: user1_id,
     name: faker.name.firstName(),
     email: faker.internet.email(),
@@ -26,8 +26,7 @@ const users = [{
     age: faker.random.number({min : 1, max: 100})
 }];
 
-
-const posts = [{
+let posts = [{
     id: post1_id,
     title: faker.lorem.word(),
     body: faker.lorem.paragraph(),
@@ -47,7 +46,7 @@ const posts = [{
     author: user2_id
 }];
 
-const comments = [{
+let comments = [{
     id: comment1_id,
     text: faker.lorem.text(),
     author: user1_id,
@@ -79,8 +78,11 @@ const typeDefs = `
     }
     type Mutation {
         createUser(data: CreateUserInput): User!
+        deleteUser(id: ID!): User!
         createPost(data: CreatePostInput): Post!
+        deletePost(id: ID!): Post!
         createComment(data: CreateCommentInput): Comment!
+        deleteComment(id: ID!): Comment!
     }
     input CreateUserInput {
         name: String!
@@ -189,6 +191,28 @@ const resolvers = {
 
             return user;
         },
+        deleteUser(parent, args, ctx, info) {
+            const userIndex = users.findIndex((user) =>user.id === args.id);
+
+            if (userIndex === -1) {
+                throw new Error('User not found')
+            }
+
+            const deletedUsers = users.splice(userIndex, 1);
+
+            posts = posts.filter((post) => {
+                const match = post.author === args.id;
+
+                if (match) {
+                    comments = comments.filter((comment) => comment.post !== post.id);
+                }
+
+                return !match;
+            });
+            comments = comments.filter((comment) => comment.author !== args.id);
+
+            return deletedUsers[0];
+        },
         createPost(parent, args, ctx, info) {
             const userExists = users.some((user) => user.id === args.data.author);
 
@@ -206,6 +230,19 @@ const resolvers = {
 
             return post;
         },
+        deletePost(parent, args, ctx, info) {
+            const postIndex = posts.findIndex((post) => post.id === args.id);
+
+            if (postIndex === -1) {
+                throw new Error('Post not found')
+            }
+
+            const deletedPosts = posts.splice(postIndex, 1);
+
+            comments = comments.filter((comment) => comment.post !== args.id);
+
+            return deletedPosts[0];
+        },
         createComment(parent, args, ctx, info) {
             const userExists = users.some((user) => user.id === args.data.author);
             const postExists = posts.some((post) => post.published === true && post.id === args.data.post);
@@ -222,6 +259,16 @@ const resolvers = {
             comments.push(comment);
 
             return comment;
+        },
+        deleteComment(parent, args, ctx, info) {
+            const commentIndex = comments.findIndex((comment) => comment.id === args.id);
+
+            if (commentIndex === -1) {
+                throw new Error('Comment not found')
+            }
+
+            const deletedComments = comments.splice(commentIndex, 1);
+            return deletedComments[0];
         }
     },
     Post: {
