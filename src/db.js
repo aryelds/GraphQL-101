@@ -13,6 +13,11 @@ let comment3_id = faker.random.uuid();
 let comment4_id = faker.random.uuid();
 
 const users = [{
+    id: '1',
+    name: 'Anna',
+    email: 'anna@example.com',
+    age: 37
+},{
     id: user1_id,
     name: faker.name.firstName(),
     email: faker.internet.email(),
@@ -25,6 +30,12 @@ const users = [{
 }];
 
 const posts = [{
+    id: '10',
+    title: 'GraphQL 101',
+    body: 'This is how to use GraphQL...',
+    published: true,
+    author: '1'
+},{
     id: post1_id,
     title: faker.lorem.word(),
     body: faker.lorem.paragraph(),
@@ -45,6 +56,11 @@ const posts = [{
 }];
 
 const comments = [{
+    id: '102',
+    text: 'This worked well for me. Thanks!',
+    author: '1',
+    post: '10'
+},{
     id: comment1_id,
     text: faker.lorem.text(),
     author: user1_id,
